@@ -79,10 +79,12 @@ export const useChatSession = () => {
       }
 
       const result = await response.json();
-      console.log("N8N Response:", result);
+      console.log("N8N Response (full object):", result);
+      console.log("N8N Response.response:", result.response);
+      console.log("N8N Response type:", typeof result);
       
-      // Get the actual AI response from the result
-      const aiResponse = result.response || result.output || result.data?.response || "I received your message but couldn't generate a response.";
+      // Get the actual AI response from the result - prioritize .response field
+      const aiResponse = result.response || result.output || result.data?.response || result.message || "לא הצלחתי לקבל תשובה מה-AI. אנא נסה שוב.";
       
       // Update assistant message with the AI response only
       updateMessageStatus(
