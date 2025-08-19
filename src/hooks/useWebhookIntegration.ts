@@ -47,12 +47,21 @@ export const useWebhookIntegration = () => {
       });
 
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        const errorText = await response.text();
+        let errorData;
+        try {
+          errorData = JSON.parse(errorText);
+        } catch {
+          errorData = { message: errorText };
+        }
+        
+        console.error("Webhook error response:", errorData);
+        throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
       }
 
       const result = await response.json();
       
-      updateTaskStatus(task.id, "completed", result.response || "Task completed successfully");
+      updateTaskStatus(task.id, "completed", result.response || result.message || "Task completed successfully");
       
       toast({
         title: "Task Completed",
@@ -63,9 +72,19 @@ export const useWebhookIntegration = () => {
       console.error("Webhook error:", error);
       updateTaskStatus(task.id, "pending");
       
+      let errorMessage = "Failed to process task. Please try again.";
+      
+      if (error instanceof Error) {
+        if (error.message.includes("Workflow could not be started")) {
+          errorMessage = "N8N Workflow error: Please check your webhook configuration in N8N.";
+        } else if (error.message.includes("Webhook node not correctly configured")) {
+          errorMessage = "N8N Configuration error: Set webhook to 'Respond to Webhook Node' mode.";
+        }
+      }
+      
       toast({
         title: "Error",
-        description: "Failed to process task. Please try again.",
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {
