@@ -41,6 +41,7 @@ export const useWebhookIntegration = () => {
         },
         body: JSON.stringify({
           message: task.content,
+          sessionId: `session-${Date.now()}`, // נדרש עבור chat trigger
           taskId: task.id,
           timestamp: task.timestamp.toISOString(),
         }),
