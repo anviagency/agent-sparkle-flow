@@ -2,7 +2,7 @@ import { useState, useCallback } from "react";
 import { Task } from "@/components/TaskList";
 import { useToast } from "@/hooks/use-toast";
 
-const WEBHOOK_URL = "https://uanvi.app.n8n.cloud/webhook/c1085cf6-3ae6-4b58-afac-733be3dcd5c6";
+const WEBHOOK_URL = "https://uanvi.app.n8n.cloud/webhook/chat";
 
 export const useWebhookIntegration = () => {
   const [tasks, setTasks] = useState<Task[]>([]);
