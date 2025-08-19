@@ -83,6 +83,17 @@ export const useChatSession = () => {
       console.log("N8N Response.response:", result.response);
       console.log("N8N Response type:", typeof result);
       
+      // Check if we got "Workflow was started" instead of actual response
+      if (result.message === "Workflow was started") {
+        // This means the webhook returned immediately without waiting for completion
+        updateMessageStatus(
+          assistantMessage.id, 
+          "completed", 
+          "⚠️ ה-webhook החזיר 'Workflow was started' במקום התשובה הסופית.\n\nזה אומר שה-webhook מוגדר להחזיר תשובה מיידית במקום לחכות שהזרימה תסתיים.\n\n**איך לתקן ב-N8N:**\n1. כנס לעורך הזרימה\n2. לחץ על ה-Webhook node\n3. בהגדרות 'Response' שנה ל-'Wait For Workflow To Complete'\n4. שמור ופעיל מחדש את הזרימה"
+        );
+        return;
+      }
+      
       // Get the actual AI response from the result - prioritize .response field
       const aiResponse = result.response || result.output || result.data?.response || result.message || "לא הצלחתי לקבל תשובה מה-AI. אנא נסה שוב.";
       
