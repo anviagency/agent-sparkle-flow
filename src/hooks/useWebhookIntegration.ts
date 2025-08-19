@@ -1,0 +1,86 @@
+import { useState, useCallback } from "react";
+import { Task } from "@/components/TaskList";
+import { useToast } from "@/hooks/use-toast";
+
+const WEBHOOK_URL = "https://uanvi.app.n8n.cloud/webhook/c1085cf6-3ae6-4b58-afac-733be3dcd5c6";
+
+export const useWebhookIntegration = () => {
+  const [tasks, setTasks] = useState<Task[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const { toast } = useToast();
+
+  const addTask = useCallback((content: string) => {
+    const newTask: Task = {
+      id: crypto.randomUUID(),
+      content,
+      status: "pending",
+      timestamp: new Date(),
+    };
+    
+    setTasks(prev => [newTask, ...prev]);
+    return newTask;
+  }, []);
+
+  const updateTaskStatus = useCallback((taskId: string, status: Task["status"], response?: string) => {
+    setTasks(prev => prev.map(task => 
+      task.id === taskId 
+        ? { ...task, status, response }
+        : task
+    ));
+  }, []);
+
+  const sendToWebhook = useCallback(async (task: Task) => {
+    try {
+      setIsLoading(true);
+      updateTaskStatus(task.id, "processing");
+
+      const response = await fetch(WEBHOOK_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          message: task.content,
+          taskId: task.id,
+          timestamp: task.timestamp.toISOString(),
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const result = await response.json();
+      
+      updateTaskStatus(task.id, "completed", result.response || "Task completed successfully");
+      
+      toast({
+        title: "Task Completed",
+        description: "Your AI agent has processed the task successfully.",
+      });
+
+    } catch (error) {
+      console.error("Webhook error:", error);
+      updateTaskStatus(task.id, "pending");
+      
+      toast({
+        title: "Error",
+        description: "Failed to process task. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  }, [updateTaskStatus, toast]);
+
+  const submitTask = useCallback(async (content: string) => {
+    const task = addTask(content);
+    await sendToWebhook(task);
+  }, [addTask, sendToWebhook]);
+
+  return {
+    tasks,
+    isLoading,
+    submitTask,
+  };
+};
