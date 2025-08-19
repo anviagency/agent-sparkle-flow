@@ -1,10 +1,10 @@
 import { AgentHeader } from "@/components/AgentHeader";
 import { AgentInput } from "@/components/AgentInput";
-import { TaskList } from "@/components/TaskList";
-import { useWebhookIntegration } from "@/hooks/useWebhookIntegration";
+import { ChatSession } from "@/components/ChatSession";
+import { useChatSession } from "@/hooks/useChatSession";
 
 const Index = () => {
-  const { tasks, isLoading, submitTask } = useWebhookIntegration();
+  const { messages, isLoading, sendMessage, sessionId } = useChatSession();
 
   return (
     <div className="min-h-screen bg-gradient-background">
@@ -31,13 +31,20 @@ const Index = () => {
 
           {/* Input Section */}
           <div className="flex justify-center">
-            <AgentInput onSubmitTask={submitTask} isLoading={isLoading} />
+            <AgentInput onSubmitTask={sendMessage} isLoading={isLoading} />
           </div>
 
-          {/* Tasks Section */}
+          {/* Chat Session */}
           <div className="mt-12">
-            <TaskList tasks={tasks} />
+            <ChatSession messages={messages} />
           </div>
+
+          {/* Session Info */}
+          {messages.length > 0 && (
+            <div className="text-center text-xs text-muted-foreground mt-8">
+              Session ID: {sessionId}
+            </div>
+          )}
         </div>
       </main>
     </div>
