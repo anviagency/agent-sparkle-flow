@@ -23,7 +23,7 @@ export const useChatSession = () => {
     return newMessage;
   }, []);
 
-  const addAssistantMessage = useCallback((content: string = "") => {
+  const addAssistantMessage = useCallback((content: string = "Thinking...") => {
     const newMessage: ChatMessage = {
       id: `assistant-${crypto.randomUUID()}`,
       content,
@@ -52,7 +52,7 @@ export const useChatSession = () => {
       addUserMessage(content);
       
       // Add placeholder assistant message
-      const assistantMessage = addAssistantMessage("Processing your request...");
+      const assistantMessage = addAssistantMessage();
 
       const response = await fetch(WEBHOOK_URL, {
         method: "POST",
@@ -79,18 +79,17 @@ export const useChatSession = () => {
       }
 
       const result = await response.json();
+      console.log("N8N Response:", result);
       
-      // Update assistant message with response
+      // Get the actual AI response from the result
+      const aiResponse = result.response || result.output || result.data?.response || "I received your message but couldn't generate a response.";
+      
+      // Update assistant message with the AI response only
       updateMessageStatus(
         assistantMessage.id, 
         "completed", 
-        result.response || result.message || "I received your message but couldn't generate a response."
+        aiResponse
       );
-      
-      toast({
-        title: "Message Sent",
-        description: "AI has responded to your message.",
-      });
 
     } catch (error) {
       console.error("Chat error:", error);
